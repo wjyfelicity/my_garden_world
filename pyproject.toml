@@ -1,0 +1,30 @@
+[project]
+name = "automation"
+version = "0.1.0"
+description = "我的花园世界自动化脚本"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "loguru>=0.7.3",
+    "numpy>=1.26.0",
+    "opencv-python>=4.8.0",
+    "pillow>=10.0.0",
+    "pyautogui>=0.9.54",
+    "rapidocr-onnxruntime>=1.4.4",
+    # Windows 专属依赖
+    "pywin32>=311; sys_platform == 'win32'",
+    "windows-capture>=2.0.0; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ipykernel>=6.29.5",
+]
+
+[tool.uv]
+# 不再限制仅 Windows，macOS / Linux 也可运行（截图走 pyautogui 回退方案）
+
+[[tool.uv.index]]
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true   # 设为默认索引
