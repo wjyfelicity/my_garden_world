@@ -14,8 +14,12 @@ class BaseTask(ABC):
     # 是否已实现具体逻辑（子类覆盖），用于 GUI 标记
     implemented: bool = False
 
+    # 未检测到目标时，同方向最多连续平移画面的次数
+    MAX_SEARCH_PANS = 2
+
     def __init__(self, task_name: str) -> None:
         self.task_name = task_name
+        self._pan_count = 0  # 同方向连续平移计数
 
     @abstractmethod
     def can_execute(self) -> bool:
@@ -51,6 +55,45 @@ class BaseTask(ABC):
         logger.debug(f"点击: 原始=({x_center:.1f}, {y_center:.1f}), scale={scale:.1f}, 实际=({abs_x}, {abs_y})")
         pyautogui.click(abs_x, abs_y)
         time.sleep(0.2)  # 避免过快点击
+
+    def drag_horizontal(self, ratio: float, duration: float = 0.4) -> None:
+        """在窗口中心按住鼠标水平拖动，用于平移游戏画面。
+
+        - ratio > 0: 鼠标向右拖动 -> 画面右移，露出左侧内容
+        - ratio < 0: 鼠标向左拖动 -> 画面左移，露出右侧内容
+        拖动距离按窗口宽度比例计算，避免不同分辨率下位移不一致。
+        """
+        left, top, right, bottom = screen_capture.window_rect
+        win_w = right - left
+        win_h = bottom - top
+        cx = left + win_w // 2
+        cy = top + win_h // 2
+        offset = int(win_w * ratio)
+        logger.info(f"画面平移: 鼠标水平拖动 {offset} 像素 (ratio={ratio})")
+        pyautogui.moveTo(cx, cy)
+        pyautogui.mouseDown()
+        pyautogui.moveRel(offset, 0, duration=duration)
+        pyautogui.mouseUp()
+        time.sleep(0.3)
+
+    def search_pan(self, ratio: float) -> bool:
+        """未检测到目标时平移画面搜索目标，同方向最多连续平移 MAX_SEARCH_PANS 次。
+
+        返回是否实际执行了平移；达到上限后只返回 False，不再移动画面。
+        检测到目标后需调用 reset_search_pan() 复位计数。
+        """
+        if self._pan_count >= self.MAX_SEARCH_PANS:
+            logger.info(f"同方向已连续平移 {self._pan_count} 次，停止平移以免画面持续漂移")
+            return False
+        self.drag_horizontal(ratio)
+        self._pan_count += 1
+        return True
+
+    def reset_search_pan(self) -> None:
+        """检测到目标后复位平移计数。"""
+        if self._pan_count:
+            logger.debug(f"复位平移计数（原为 {self._pan_count}）")
+        self._pan_count = 0
 
     def close_popup(self) -> bool:
         """查找并点击一个关闭按钮（X），匹配 templates/common/close/ 下任一模板。

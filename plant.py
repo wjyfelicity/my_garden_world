@@ -22,6 +22,9 @@ MATURE_FILE = "成熟状态"
 WATER_BUTTON = "选择水桶浇水"
 HARVEST_BUTTON = "收获"
 
+# 种花面板位于画面偏左，未检测到时向右平移画面（ratio>0）把它带入视野
+PAN_RATIO = 0.15
+
 
 class PlantFlowerTask(BaseTask):
     implemented: bool = True
@@ -64,8 +67,11 @@ class PlantFlowerTask(BaseTask):
 
         if not positions:
             logger.info("本轮未检测到可处理的土地状态")
+            self.search_pan(PAN_RATIO)
             time.sleep(2)
             return
+
+        self.reset_search_pan()
 
         # 按优先级分类：成熟收获 > 待浇水 > 空地种植
         mature = [(n, c) for n, _, c in positions if n.endswith(f"/{MATURE_FILE}")]

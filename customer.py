@@ -7,6 +7,9 @@ from recognition import screen_capture
 from recognition._image_recognition import image_recognition
 from recognition.character_recognition import text_recognition
 
+# 顾客订单面板位于画面偏右，未检测到时向左平移画面（ratio<0）把它带入视野
+PAN_RATIO = -0.15
+
 
 class CustomerOrderTask(BaseTask):
     implemented: bool = True
@@ -26,8 +29,11 @@ class CustomerOrderTask(BaseTask):
 
         if not objs:
             logger.info("本轮未检测到订单图标（绿/黄/红），请确认游戏停留在顾客订单面板")
+            self.search_pan(PAN_RATIO)
             time.sleep(2)
             return
+
+        self.reset_search_pan()
 
         for name, conf, cx, cy in objs:
             if name not in ['green_check', 'yellow_exclamation', 'red_exclamation']:

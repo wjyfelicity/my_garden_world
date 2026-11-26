@@ -29,6 +29,8 @@ class Automation:
         self._running = False
 
     def mainloop(self):
+        # 游戏只响应触控板双指捏合手势，鼠标/键盘均无法缩放，代码也无法合成该手势
+        logger.info("提示：请先用触控板双指捏合缩小画面再启动，否则只能看到局部")
         self._running = True
         while self._running:
             # TODO: 【轮询】伪代码，循环检查每个任务是否可执行，并执行
